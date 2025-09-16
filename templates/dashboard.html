@@ -1,0 +1,536 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Ayush Herbal Software{% endblock %}
+{% block page_title %}Payment Reminders Dashboard{% endblock %}
+
+{% block content %}
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                            Reminder Period
+                        </h5>
+                        <div class="btn-group mt-2" role="group">
+                            <a href="?days=5&payment_type={{ payment_type_filter }}" class="btn {% if reminder_days == 5 %}btn-primary{% else %}btn-outline-primary{% endif %}">5 Days</a>
+                            <a href="?days=10&payment_type={{ payment_type_filter }}" class="btn {% if reminder_days == 10 %}btn-primary{% else %}btn-outline-primary{% endif %}">10 Days</a>
+                            <a href="?days=15&payment_type={{ payment_type_filter }}" class="btn {% if reminder_days == 15 %}btn-primary{% else %}btn-outline-primary{% endif %}">15 Days</a>
+                            <a href="?days=20&payment_type={{ payment_type_filter }}" class="btn {% if reminder_days == 20 %}btn-primary{% else %}btn-outline-primary{% endif %}">20 Days</a>
+                            <a href="?days=25&payment_type={{ payment_type_filter }}" class="btn {% if reminder_days == 25 %}btn-primary{% else %}btn-outline-primary{% endif %}">25 Days</a>
+                            <a href="?days=30&payment_type={{ payment_type_filter }}" class="btn {% if reminder_days == 30 %}btn-primary{% else %}btn-outline-primary{% endif %}">30 Days</a>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h5 class="mb-0">
+                            <i class="fas fa-filter me-2 text-success"></i>
+                            Payment Type Filter
+                        </h5>
+                        <div class="btn-group mt-2" role="group">
+                            <a href="?days={{ reminder_days }}&payment_type=all" class="btn {% if payment_type_filter == 'all' %}btn-success{% else %}btn-outline-success{% endif %}">All</a>
+                            <a href="?days={{ reminder_days }}&payment_type=Credit" class="btn {% if payment_type_filter == 'Credit' %}btn-success{% else %}btn-outline-success{% endif %}">Credit</a>
+                            <a href="?days={{ reminder_days }}&payment_type=Cash" class="btn {% if payment_type_filter == 'Cash' %}btn-success{% else %}btn-outline-success{% endif %}">Cash</a>
+                            <a href="?days={{ reminder_days }}&payment_type=Check" class="btn {% if payment_type_filter == 'Check' %}btn-success{% else %}btn-outline-success{% endif %}">Check</a>
+                            <a href="?days={{ reminder_days }}&payment_type=Advance" class="btn {% if payment_type_filter == 'Advance' %}btn-success{% else %}btn-outline-success{% endif %}">Advance</a>
+                            <a href="?days={{ reminder_days }}&payment_type=Cheque" class="btn {% if payment_type_filter == 'Cheque' %}btn-success{% else %}btn-outline-success{% endif %}">Cheque</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Stats Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stats-card-overdue border-0 shadow-lg">
+            <div class="card-body text-center">
+                <div class="stats-icon mb-3">
+                    <i class="fas fa-exclamation-triangle fa-3x"></i>
+                </div>
+                <div class="stats-number">{{ overdue|length }}</div>
+                <div class="stats-label">Overdue Bills</div>
+                <div class="stats-amount">₹{{ "%.2f"|format(overdue_total) }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stats-card-due-today border-0 shadow-lg">
+            <div class="card-body text-center">
+                <div class="stats-icon mb-3">
+                    <i class="fas fa-clock fa-3x"></i>
+                </div>
+                <div class="stats-number">{{ due_today|length }}</div>
+                <div class="stats-label">Due Today</div>
+                <div class="stats-amount">₹{{ "%.2f"|format(due_today_total) }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stats-card-due-soon border-0 shadow-lg">
+            <div class="card-body text-center">
+                <div class="stats-icon mb-3">
+                    <i class="fas fa-calendar-week fa-3x"></i>
+                </div>
+                <div class="stats-number">{{ due_soon|length }}</div>
+                <div class="stats-label">Due in {{ reminder_days }} Days</div>
+                <div class="stats-amount">₹{{ "%.2f"|format(due_soon_total) }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stats-card-paid border-0 shadow-lg">
+            <div class="card-body text-center">
+                <div class="stats-icon mb-3">
+                    <i class="fas fa-check-circle fa-3x"></i>
+                </div>
+                <div class="stats-number">{{ paid|length }}</div>
+                <div class="stats-label">Paid Bills</div>
+                <div class="stats-amount">₹{{ "%.2f"|format(paid_total) }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vendor Summary -->
+{% if vendor_summary %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-gradient-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Vendor Summary - Pending Amounts
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for vendor_name, data in vendor_summary.items() %}
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <div class="vendor-card">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="vendor-name mb-1">{{ vendor_name }}</h6>
+                                    <small class="text-muted">{{ data.count }} bill{{ 's' if data.count != 1 else '' }}</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="vendor-amount">₹{{ "%.2f"|format(data.total) }}</div>
+                                    {% if data.phone %}
+                                    <small class="text-muted">{{ data.phone }}</small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Overdue Bills -->
+{% if overdue %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Overdue Bills ({{ overdue|length }}) - Total: ₹{{ "%.2f"|format(overdue_total) }}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Bill No.</th>
+                                <th>Bill Date</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Advance</th>
+                                <th>Pending</th>
+                                <th>Payment Type</th>
+                                <th>Days Overdue</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in overdue %}
+                            <tr class="table-danger">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-avatar me-2">
+                                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                        </div>
+                                        <div>
+                                            <strong>{{ purchase.vendor_name }}</strong>
+                                            {% if purchase.vendor_phone %}
+                                            <br><small class="text-muted">{{ purchase.vendor_phone }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-dark">{{ purchase.bill_no }}</span></td>
+                                <td>{{ purchase.bill_date }}</td>
+                                <td>{{ purchase.due_date }}</td>
+                                <td>₹{{ "%.2f"|format(purchase.bill_amount) }}</td>
+                                <td>₹{{ "%.2f"|format(purchase.advance_paid or 0) }}</td>
+                                <td><strong class="text-danger">₹{{ "%.2f"|format(purchase.pending_amount) }}</strong></td>
+                                <td>
+                                    <span class="badge {% if purchase.payment_type == 'Credit' %}bg-warning{% elif purchase.payment_type == 'Cash' %}bg-success{% elif purchase.payment_type == 'Check' %}bg-info{% else %}bg-secondary{% endif %}">
+                                        {{ purchase.payment_type }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">{{ -purchase.days_remaining }} days</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="addPayment({{ purchase.id }})">
+                                        <i class="fas fa-credit-card me-1"></i> Pay
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Due Today -->
+{% if due_today %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    Due Today ({{ due_today|length }}) - Total: ₹{{ "%.2f"|format(due_today_total) }}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Bill No.</th>
+                                <th>Bill Date</th>
+                                <th>Amount</th>
+                                <th>Advance</th>
+                                <th>Pending</th>
+                                <th>Payment Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in due_today %}
+                            <tr class="table-warning">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-avatar me-2">
+                                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                        </div>
+                                        <div>
+                                            <strong>{{ purchase.vendor_name }}</strong>
+                                            {% if purchase.vendor_phone %}
+                                            <br><small class="text-muted">{{ purchase.vendor_phone }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-dark">{{ purchase.bill_no }}</span></td>
+                                <td>{{ purchase.bill_date }}</td>
+                                <td>₹{{ "%.2f"|format(purchase.bill_amount) }}</td>
+                                <td>₹{{ "%.2f"|format(purchase.advance_paid or 0) }}</td>
+                                <td><strong class="text-warning">₹{{ "%.2f"|format(purchase.pending_amount) }}</strong></td>
+                                <td>
+                                    <span class="badge {% if purchase.payment_type == 'Credit' %}bg-warning{% elif purchase.payment_type == 'Cash' %}bg-success{% elif purchase.payment_type == 'Check' %}bg-info{% else %}bg-secondary{% endif %}">
+                                        {{ purchase.payment_type }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="addPayment({{ purchase.id }})">
+                                        <i class="fas fa-credit-card me-1"></i> Pay
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Due Soon -->
+{% if due_soon %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-week me-2"></i>
+                    Due in Next {{ reminder_days }} Days ({{ due_soon|length }}) - Total: ₹{{ "%.2f"|format(due_soon_total) }}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Bill No.</th>
+                                <th>Bill Date</th>
+                                <th>Due Date</th>
+                                <th>Amount</th>
+                                <th>Advance</th>
+                                <th>Pending</th>
+                                <th>Payment Type</th>
+                                <th>Days Left</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in due_soon %}
+                            <tr class="table-info">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-avatar me-2">
+                                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                        </div>
+                                        <div>
+                                            <strong>{{ purchase.vendor_name }}</strong>
+                                            {% if purchase.vendor_phone %}
+                                            <br><small class="text-muted">{{ purchase.vendor_phone }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-dark">{{ purchase.bill_no }}</span></td>
+                                <td>{{ purchase.bill_date }}</td>
+                                <td>{{ purchase.due_date }}</td>
+                                <td>₹{{ "%.2f"|format(purchase.bill_amount) }}</td>
+                                <td>₹{{ "%.2f"|format(purchase.advance_paid or 0) }}</td>
+                                <td><strong class="text-info">₹{{ "%.2f"|format(purchase.pending_amount) }}</strong></td>
+                                <td>
+                                    <span class="badge {% if purchase.payment_type == 'Credit' %}bg-warning{% elif purchase.payment_type == 'Cash' %}bg-success{% elif purchase.payment_type == 'Check' %}bg-info{% else %}bg-secondary{% endif %}">
+                                        {{ purchase.payment_type }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ purchase.days_remaining }} days</span>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="addPayment({{ purchase.id }})">
+                                        <i class="fas fa-credit-card me-1"></i> Pay
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Paid Bills (Recent) -->
+{% if paid %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>
+                    Recently Paid Bills ({{ paid|length }}) - Total: ₹{{ "%.2f"|format(paid_total) }}
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Vendor</th>
+                                <th>Bill No.</th>
+                                <th>Bill Date</th>
+                                <th>Amount</th>
+                                <th>Advance Paid</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for purchase in paid[:10] %}
+                            <tr class="table-success">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="vendor-avatar me-2">
+                                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                        </div>
+                                        <div>
+                                            <strong>{{ purchase.vendor_name }}</strong>
+                                            {% if purchase.vendor_phone %}
+                                            <br><small class="text-muted">{{ purchase.vendor_phone }}</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-dark">{{ purchase.bill_no }}</span></td>
+                                <td>{{ purchase.bill_date }}</td>
+                                <td>₹{{ "%.2f"|format(purchase.bill_amount) }}</td>
+                                <td>₹{{ "%.2f"|format(purchase.advance_paid or 0) }}</td>
+                                <td>
+                                    <span class="badge bg-success">Paid</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- No Data Message -->
+{% if not overdue and not due_today and not due_soon and not paid %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <div class="empty-state">
+                    <i class="fas fa-chart-line fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted mb-3">No Purchase Data Available</h4>
+                    <p class="text-muted mb-4">Start by adding vendors and creating purchase entries to see payment reminders.</p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="{{ url_for('vendors') }}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-users me-2"></i> Add Vendors
+                        </a>
+                        <a href="{{ url_for('purchases') }}" class="btn btn-outline-primary btn-lg">
+                            <i class="fas fa-shopping-cart me-2"></i> Add Purchases
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add Payment Modal -->
+<div class="modal fade" id="addPaymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-credit-card me-2"></i>Add Payment
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_payment') }}" id="addPaymentForm">
+                <div class="modal-body">
+                    <input type="hidden" id="payment_purchase_id" name="purchase_id">
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Purchase Details</label>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <p class="mb-1"><strong>Vendor:</strong> <span id="payment_vendor_name">-</span></p>
+                                <p class="mb-1"><strong>Bill No:</strong> <span id="payment_bill_no">-</span></p>
+                                <p class="mb-1"><strong>Bill Amount:</strong> ₹<span id="payment_bill_amount">0.00</span></p>
+                                <p class="mb-0"><strong>Current Advance:</strong> ₹<span id="payment_current_advance">0.00</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paid_amount" class="form-label">Payment Amount *</label>
+                        <input type="number" class="form-control" id="paid_amount" name="paid_amount" step="0.01" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="paid_date" class="form-label">Payment Date</label>
+                        <input type="date" class="form-control" id="paid_date" name="paid_date">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="payment_method" class="form-label">Payment Method</label>
+                        <select class="form-select" id="payment_method" name="payment_method">
+                            <option value="Cash">Cash</option>
+                            <option value="Check">Check</option>
+                            <option value="Cheque">Cheque</option>
+                            <option value="Bank Transfer">Bank Transfer</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Note</label>
+                        <textarea class="form-control" id="note" name="note" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> Record Payment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-refresh dashboard every 30 seconds
+setInterval(function() {
+    location.reload();
+}, 30000);
+
+// Add payment function
+function addPayment(purchaseId) {
+    fetch(`/api/purchase/${purchaseId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Error: ' + data.error);
+                return;
+            }
+            
+            document.getElementById('payment_purchase_id').value = data.id;
+            document.getElementById('payment_vendor_name').textContent = data.vendor_name;
+            document.getElementById('payment_bill_no').textContent = data.bill_no;
+            document.getElementById('payment_bill_amount').textContent = parseFloat(data.bill_amount).toFixed(2);
+            document.getElementById('payment_current_advance').textContent = parseFloat(data.advance_paid || 0).toFixed(2);
+            
+            const modal = new bootstrap.Modal(document.getElementById('addPaymentModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error fetching purchase details');
+        });
+}
+
+// Set today's date as default for payment date
+document.getElementById('paid_date').value = new Date().toISOString().split('T')[0];
+</script>
+{% endblock %}
